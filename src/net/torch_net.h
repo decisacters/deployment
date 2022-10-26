@@ -69,6 +69,12 @@ namespace torch
             std::shared_ptr<IValue> toTuple() { std::shared_ptr<IValue> v; return v; };
             std::vector<IValue> elements() { std::vector<IValue> v; return v; };
             Tensor toTensor() { Tensor t; return t; };
+            
+            bool isTuple() { return false;};
+            bool isTensorList() { return false;};
+            bool isTensor() { return false;};
+            IValue toList() { IValue t; return t; };
+            IValue get(int output_index) { IValue t; return t; };
         };
 
         namespace script

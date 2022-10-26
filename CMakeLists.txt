@@ -15,10 +15,12 @@ file(GLOB CUDAFILES ${deployment_dir}/src/net/*.cu)
 
 set(LIBS_DIR ${deployment_dir}/../data/libs)
 
+# TODO build directory location
+set(NVINFER "")
 find_package(CUDA)
 if(CUDA_FOUND)
 
-    find_library(NVINFER NAMES nvinfer REQUIRED
+    find_library(NVINFER NAMES nvinfer
     HINTS ${LIBS_DIR}/TensorRT-8.4.1.5.Windows10.x86_64.cuda-11.6.cudnn8.4/lib)
 
     add_definitions(-DCUDA_FOUND)
@@ -56,22 +58,22 @@ else(CUDA_FOUND)
 endif(CUDA_FOUND)
 
 if(WIN32)
-set(OpenCV_DIR ${LIBS_DIR}/opencv-4.6.0/build)
-link_directories(${LIBS_DIR}/opencv-4.6.0/build/x64/vc15/bin)
+    set(OpenCV_DIR ${LIBS_DIR}/opencv-4.6.0/build)
+    link_directories(${LIBS_DIR}/opencv-4.6.0/build/x64/vc15/bin)
 
-set(NCNN ${LIBS_DIR}/ncnn-20220701-windows-vs2022-shared/x64)
-set(Vulkan_INCLUDE_DIR "C:\\VulkanSDK\\1.3.216.0\\Include\\")
-set(Vulkan_LIBRARY "C:\\VulkanSDK\\1.3.216.0\\Lib\\")
+    set(NCNN ${LIBS_DIR}/ncnn-20220701-windows-vs2022-shared/x64)
+    set(Vulkan_INCLUDE_DIR "C:\\VulkanSDK\\1.3.216.0\\Include\\")
+    set(Vulkan_LIBRARY "C:\\VulkanSDK\\1.3.216.0\\Lib\\")
 
-set(CUDNN_LIBRARY_PATH "")
-set(CUDNN_INCLUDE_PATH ${LIBS_DIR}/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive/include)
-list(APPEND CUDNN_LIBRARY_PATH ${LIBS_DIR}/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive/lib)
-list(APPEND CUDNN_LIBRARY_PATH ${LIBS_DIR}/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive/bin)
+    set(CUDNN_LIBRARY_PATH "")
+    set(CUDNN_INCLUDE_PATH ${LIBS_DIR}/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive/include)
+    list(APPEND CUDNN_LIBRARY_PATH ${LIBS_DIR}/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive/lib)
+    list(APPEND CUDNN_LIBRARY_PATH ${LIBS_DIR}/cudnn-windows-x86_64-8.4.1.50_cuda11.6-archive/bin)
 
 elseif(UNIX)
-set(NCNN ${LIBS_DIR}/ncnn-20220701-ubuntu-2004-shared)
+    set(NCNN ${LIBS_DIR}/ncnn-20220701-ubuntu-2004-shared)
 
-find_package(ncnn)
+    find_package(ncnn)
 
 endif()
 
@@ -95,57 +97,56 @@ endforeach(LIB_DIR)
 find_package(OpenCV)
 find_package(Torch)
 
-find_library(ONNX_FOUND NAMES onnxruntime HINTS ${ONNX}/lib REQUIRED)
+find_library(ONNX_FOUND NAMES onnxruntime HINTS ${ONNX}/lib)
 
 if(NVINFER)
+    cuda_add_library(
+        DAAI 
+        ${CUDAFILES}
+        ${SRCFILES}
+        ${COREFILES}
+        ${APIFILES}
+        ${NETFILES}
+    )
+    cuda_add_executable(AI ${deployment_dir}/src/daai.cpp)
 
-cuda_add_library(
-    DAAI 
-    ${CUDAFILES}
-    ${SRCFILES}
-    ${COREFILES}
-    ${APIFILES}
-    ${NETFILES}
-)
-cuda_add_executable(AI ${deployment_dir}/src/daai.cpp)
-
-add_definitions(-DTRT_FOUND)
-target_link_libraries(DAAI nvinfer cudart)
+    add_definitions(-DTRT_FOUND)
+    target_link_libraries(DAAI nvinfer cudart)
 else(NVINFER)
-add_library(
-    DAAI 
-    ${SRCFILES}
-    ${COREFILES}
-    ${APIFILES}
-    ${NETFILES}
-)
-add_executable(AI ${deployment_dir}/src/daai.cpp)
+    add_library(
+        DAAI 
+        ${SRCFILES}
+        ${COREFILES}
+        ${APIFILES}
+        ${NETFILES}
+    )
+    add_executable(AI ${deployment_dir}/src/daai.cpp)
 endif(NVINFER)
 
 if(ncnn_FOUND)
-add_definitions(-DNCNN_FOUND)
-target_link_libraries(DAAI ncnn)
+    add_definitions(-DNCNN_FOUND)
+    target_link_libraries(DAAI ncnn)
 endif(ncnn_FOUND)
 
 if(ONNX_FOUND)
-add_definitions(-DONNX_FOUND)
-target_link_libraries(DAAI onnxruntime)
+    add_definitions(-DONNX_FOUND)
+    target_link_libraries(DAAI onnxruntime)
 endif(ONNX_FOUND)
 
 if(Torch_FOUND)
-add_definitions(-DTORCH_FOUND)
-target_link_libraries(DAAI ${TORCH_LIBRARIES})
+    add_definitions(-DTORCH_FOUND)
+    target_link_libraries(DAAI ${TORCH_LIBRARIES})
 endif(Torch_FOUND)
 
 if(OPENCV_FOUND)
-add_definitions(-DOPENCV_FOUND)
-target_link_libraries(DAAI ${OpenCV_LIBS})
-include_directories(/usr/local/include/opencv4)
+    add_definitions(-DOPENCV_FOUND)
+    target_link_libraries(DAAI ${OpenCV_LIBS})
+    include_directories(/usr/local/include/opencv4)
 endif(OPENCV_FOUND)
 
 if(NOT DEFINED ANDROID AND NOT DEFINED MSVC)
-# TODO
-target_link_libraries(DAAI pthread)
+    # TODO
+    target_link_libraries(DAAI pthread)
 endif()
 
 target_include_directories(DAAI PUBLIC ${deployment_dir}/src)

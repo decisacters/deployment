@@ -1,6 +1,4 @@
 
-#ifdef ONNX_FOUND
-
 #include "net/onnx_net.h"
 
 ai_onnx::ONNXNet::ONNXNet(
@@ -184,5 +182,3 @@ void ai_onnx::ONNXNet::set_shapes(
     shapes.push_back(shape);
     names.push_back(name);
 }
-
-#endif
